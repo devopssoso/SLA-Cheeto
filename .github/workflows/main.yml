@@ -1,18 +1,16 @@
 name: Build
-#test
 
 on:
   push:
     branches: [ main ]
 
 env:
-  # SOLUTION_FILE_PATH: ./SoloLevelling.sln
   PROJECT_FILE_PATH: ./cheat/SoloLevelling.vcxproj
   BUILD_CONFIGURATION: Release
   PLATFORM: x64
 
 permissions:
-  contents: read
+  contents: write  # Permet de committer les fichiers dans le dépôt
 
 jobs:
   build:
@@ -28,11 +26,24 @@ jobs:
 
     - name: Build
       run: |
-        msbuild ${{ env.PROJECT_FILE_PATH }} /p:Configuration=${{ env.BUILD_CONFIGURATION }} /p:Platform=${{ env.PLATFORM }}  
+        msbuild ${{ env.PROJECT_FILE_PATH }} /p:Configuration=${{ env.BUILD_CONFIGURATION }} /p:Platform=${{ env.PLATFORM }}
 
-    - name: Upload Build Artifact
+    - name: Copy Build Artifacts to Repository
+      run: |
+        mkdir -p ./build-artifacts  # Créer un répertoire pour les artifacts
+        copy ./cheat/bin/Release-x64/* ./build-artifacts/  # Copie les fichiers générés
+
+    - name: Commit and Push Build Artifacts to Repo
+      run: |
+        git config --global user.email "sosoichigo@gmail.com"
+        git config --global user.name "devopssoso"
+        git add ./build-artifacts/*
+        git commit -m "Add build artifacts"
+        git push
+
+    - name: Upload Build Artifact (Optional)
       uses: actions/upload-artifact@v3.1.0
       with:
         name: build-artifact
-        path: ./cheat/bin/Release-x64/SLA_Cheeto.dll
+        path: ./build-artifacts
         if-no-files-found: error
